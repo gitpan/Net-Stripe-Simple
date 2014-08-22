@@ -39,10 +39,11 @@ my %WriteMakefileArgs = (
     "File::Spec" => 0,
     "IO::Handle" => 0,
     "IPC::Open3" => 0,
+    "Test::Exception" => 0,
     "Test::More" => "0.88",
     "autodie" => 0
   },
-  "VERSION" => "0.001",
+  "VERSION" => "0.002",
   "test" => {
     "TESTS" => "t/*.t"
   }
@@ -61,6 +62,7 @@ my %FallbackPrereqs = (
   "LWP::UserAgent" => 0,
   "MIME::Base64" => 0,
   "Scalar::Util" => 0,
+  "Test::Exception" => 0,
   "Test::More" => "0.88",
   "URI::Escape" => 0,
   "autodie" => 0,

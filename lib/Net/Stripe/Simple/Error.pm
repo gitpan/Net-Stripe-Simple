@@ -1,5 +1,5 @@
 package Net::Stripe::Simple::Error;
-$Net::Stripe::Simple::Error::VERSION = '0.001';
+$Net::Stripe::Simple::Error::VERSION = '0.002';
 # ABSTRACT: general error class for Net::Stripe::Simple
 
 
@@ -33,7 +33,7 @@ Net::Stripe::Simple::Error - general error class for Net::Stripe::Simple
 
 =head1 VERSION
 
-version 0.001
+version 0.002
 
 =head1 DESCRIPTION
 

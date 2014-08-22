@@ -60,6 +60,7 @@ eval { $v .= pmver('JSON','any version') };
 eval { $v .= pmver('LWP::UserAgent','any version') };
 eval { $v .= pmver('MIME::Base64','any version') };
 eval { $v .= pmver('Scalar::Util','any version') };
+eval { $v .= pmver('Test::Exception','any version') };
 eval { $v .= pmver('Test::More','0.88') };
 eval { $v .= pmver('URI::Escape','any version') };
 eval { $v .= pmver('autodie','any version') };

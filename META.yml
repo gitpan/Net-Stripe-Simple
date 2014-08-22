@@ -8,6 +8,7 @@ build_requires:
   File::Spec: '0'
   IO::Handle: '0'
   IPC::Open3: '0'
+  Test::Exception: '0'
   Test::More: '0.88'
   autodie: '0'
 configure_requires:
@@ -35,4 +36,4 @@ requires:
   perl: v5.10.0
   strict: '0'
   warnings: '0'
-version: '0.001'
+version: '0.002'

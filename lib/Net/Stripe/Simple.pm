@@ -1,5 +1,5 @@
 package Net::Stripe::Simple;
-$Net::Stripe::Simple::VERSION = '0.001';
+$Net::Stripe::Simple::VERSION = '0.002';
 # ABSTRACT: simple, non-Moose interface to the Stripe API
 
 
@@ -69,14 +69,14 @@ sub _clean {
 sub _retrieve {
     my ( $self, $args ) = @_;
     my ( $base, $id )   = @$args{qw(_base id)};
-    my $url = $base;
-    $url .= '/' . uri_escape($id) if defined $id;
-    return $self->_get($url);
+    _invalid('No id provided.') unless defined $id;
+    return $self->_get( $base . '/' . uri_escape($id) );
 }
 
 sub _update {
     my ( $self, $args ) = @_;
     my ( $base, $id )   = delete @$args{qw(_base id)};
+    _invalid('No id provided.') unless defined $id;
     _clean($args);
     return $self->_post( $base . '/' . uri_escape($id), $args );
 }
@@ -98,11 +98,16 @@ sub _list {
 sub _del {
     my ( $self, $args ) = @_;
     my ( $base, $id )   = @$args{qw(_base id)};
+    _invalid('No id provided.') unless defined $id;
     return $self->_delete( $base . '/' . uri_escape($id) );
 }
 
 # create a common uri base; expects customer id and sub-base
-sub _customer_base { 'customers/' . uri_escape(shift) . '/' . shift }
+sub _customer_base {
+    my $customer = shift;
+    _invalid('No customer id provided.') unless defined $customer;
+    return 'customers/' . uri_escape($customer) . '/' . shift;
+}
 
 
 sub charges {
@@ -120,6 +125,7 @@ sub _update_charge   { goto &_update }
 sub _capture_charge {
     my ( $self, $args ) = @_;
     my ( $base, $id )   = delete @$args{qw(_base id)};
+    _invalid('No id provided.') unless defined $id;
     _clean($args);
     return $self->_post( $base . '/' . uri_escape($id) . '/capture', $args );
 }
@@ -128,6 +134,7 @@ sub _list_charge { goto &_list }
 sub _refund_charge {
     my ( $self, $args ) = @_;
     my ( $base, $id )   = delete @$args{qw(_base id)};
+    _invalid('No id provided.') unless defined $id;
     _clean($args);
     return $self->_post( $base . '/' . uri_escape($id) . '/refund', $args );
 }
@@ -140,31 +147,45 @@ sub refunds {
     $args->{_base} = 'charges';
     return $self->$method($args);
 }
-sub _create_refund   {
+
+sub _create_refund {
     my ( $self, $args ) = @_;
     my ( $base, $id )   = delete @$args{qw(_base id)};
+    _invalid('No id provided.') unless defined $id;
     _clean($args);
     return $self->_post( $base . '/' . uri_escape($id) . '/refunds', $args );
 }
+
 sub _retrieve_refund {
     my ( $self, $args ) = @_;
     my ( $base, $id, $charge ) = delete @$args{qw(_base id charge)};
+    my @errors;
+    push @errors, 'No id provided.'     unless defined $id;
+    push @errors, 'No charge provided.' unless defined $charge;
+    _invalid( join ' ', @errors ) if @errors;
     _clean($args);
     return $self->_get(
         $base . '/' . uri_escape($charge) . '/refunds/' . uri_escape($id),
         $args );
 }
+
 sub _update_refund {
     my ( $self, $args ) = @_;
     my ( $base, $id, $charge ) = delete @$args{qw(_base id charge)};
+    my @errors;
+    push @errors, 'No id provided.'     unless defined $id;
+    push @errors, 'No charge provided.' unless defined $charge;
+    _invalid( join ' ', @errors ) if @errors;
     _clean($args);
     return $self->_post(
         $base . '/' . uri_escape($charge) . '/refunds/' . uri_escape($id),
         $args );
 }
+
 sub _list_refund {
     my ( $self, $args ) = @_;
     my ( $base, $id )   = delete @$args{qw(_base id)};
+    _invalid('No id provided.') unless defined $id;
     _clean($args);
     return $self->_get( $base . '/' . uri_escape($id) . '/refunds', $args );
 }
@@ -205,6 +226,10 @@ sub _create_card {
 sub _retrieve_card {
     my ( $self, $args ) = @_;
     my ( $base, $id, $customer ) = @$args{qw(_base id customer)};
+    my @errors;
+    push @errors, 'No id provided.'          unless defined $id;
+    push @errors, 'No customer id provided.' unless defined $customer;
+    _invalid( join ' ', @errors ) if @errors;
     return $self->_get(
         _customer_base( $customer, $base ) . '/' . uri_escape($id) );
 }
@@ -212,6 +237,10 @@ sub _retrieve_card {
 sub _update_card {
     my ( $self, $args ) = @_;
     my ( $base, $id, $customer ) = delete @$args{qw(_base id customer)};
+    my @errors;
+    push @errors, 'No id provided.'          unless defined $id;
+    push @errors, 'No customer id provided.' unless defined $customer;
+    _invalid( join ' ', @errors ) if @errors;
     _clean($args);
     return $self->_post(
         _customer_base( $customer, $base ) . '/' . uri_escape($id), $args );
@@ -220,6 +249,10 @@ sub _update_card {
 sub _delete_card {
     my ( $self, $args ) = @_;
     my ( $base, $id, $customer ) = @$args{qw(_base id customer)};
+    my @errors;
+    push @errors, 'No id provided.'          unless defined $id;
+    push @errors, 'No customer id provided.' unless defined $customer;
+    _invalid( join ' ', @errors ) if @errors;
     return $self->_delete(
         _customer_base( $customer, $base ) . '/' . uri_escape($id) );
 }
@@ -253,6 +286,10 @@ sub _create_subscription {
 sub _retrieve_subscription {
     my ( $self, $args ) = @_;
     my ( $base, $id, $customer ) = @$args{qw(_base id customer)};
+    my @errors;
+    push @errors, 'No id provided.'          unless defined $id;
+    push @errors, 'No customer id provided.' unless defined $customer;
+    _invalid( join ' ', @errors ) if @errors;
     return $self->_get(
         _customer_base( $customer, $base ) . '/' . uri_escape($id) );
 }
@@ -260,6 +297,10 @@ sub _retrieve_subscription {
 sub _update_subscription {
     my ( $self, $args ) = @_;
     my ( $base, $id, $customer ) = delete @$args{qw(_base id customer)};
+    my @errors;
+    push @errors, 'No id provided.'          unless defined $id;
+    push @errors, 'No customer id provided.' unless defined $customer;
+    _invalid( join ' ', @errors ) if @errors;
     _clean($args);
     return $self->_post(
         _customer_base( $customer, $base ) . '/' . uri_escape($id), $args );
@@ -268,6 +309,10 @@ sub _update_subscription {
 sub _cancel_subscription {
     my ( $self, $args ) = @_;
     my ( $base, $id, $customer ) = @$args{qw(_base id customer)};
+    my @errors;
+    push @errors, 'No id provided.'          unless defined $id;
+    push @errors, 'No customer id provided.' unless defined $customer;
+    _invalid( join ' ', @errors ) if @errors;
     return $self->_delete(
         _customer_base( $customer, $base ) . '/' . uri_escape($id) );
 }
@@ -318,14 +363,18 @@ sub discounts {
 
 sub _customer_discount {
     my ( $self, $args ) = @_;
-    my ( $base, $id, $customer ) = @$args{qw(_base id customer)};
+    my ( $id, $customer ) = @$args{qw(id customer)};
     $id //= $customer;
     return $self->_delete( _customer_base( $id, 'discount' ) );
 }
 
 sub _subscription_discount {
     my ( $self, $args ) = @_;
-    my ( $base, $id, $customer ) = @$args{qw(_base subscription customer)};
+    my ( $id, $customer ) = @$args{qw(subscription customer)};
+    my @errors;
+    push @errors, 'No id provided.'          unless defined $id;
+    push @errors, 'No customer id provided.' unless defined $customer;
+    _invalid( join ' ', @errors ) if @errors;
     my $path =
         _customer_base( $customer, 'subscriptions' ) . '/'
       . uri_escape($id)
@@ -349,6 +398,7 @@ sub _retrieve_invoice { goto &_retrieve }
 sub _lines_invoice {
     my ( $self, $args ) = @_;
     my ( $base, $id )   = delete @$args{qw(_base id)};
+    _invalid('No id provided.') unless defined $id;
     _clean($args);
     return $self->_get( $base . '/' . uri_escape($id) . '/lines', $args );
 }
@@ -357,6 +407,7 @@ sub _update_invoice { goto &_update }
 sub _pay_invoice {
     my ( $self, $args ) = @_;
     my ( $base, $id )   = @$args{qw(_base id)};
+    _invalid('No id provided.') unless defined $id;
     return $self->_post( $base . '/' . uri_escape($id) . '/pay' );
 }
 sub _list_invoice { goto &_list }
@@ -365,6 +416,7 @@ sub _upcoming_invoice {
     my ( $self, $args ) = @_;
     my ( $base, $id, $customer ) = @$args{qw(_base id customer)};
     $id //= $customer;
+    _invalid('No id provided.') unless defined $id;
     return $self->_get( $base . '/upcoming', { customer => $id } );
 }
 
@@ -394,6 +446,7 @@ sub disputes {
 sub _update_dispute {
     my ( $self, $args ) = @_;
     my $id = delete $args->{id};
+    _invalid('No id provided.') unless defined $id;
     _clean($args);
     my $path = 'charges/' . uri_escape($id) . '/dispute';
     return $self->_post( $path, $args );
@@ -402,6 +455,7 @@ sub _update_dispute {
 sub _close_dispute {
     my ( $self, $args ) = @_;
     my $id = delete $args->{id};
+    _invalid('No id provided.') unless defined $id;
     _clean($args);
     my $path = 'charges/' . uri_escape($id) . '/dispute/close';
     return $self->_post( $path, $args );
@@ -423,6 +477,7 @@ sub _update_transfer   { goto &_update }
 sub _cancel_transfer {
     my ( $self, $args ) = @_;
     my ( $base, $id )   = @$args{qw(_base id)};
+    _invalid('No id provided.') unless defined $id;
     my $path = $base . '/' . uri_escape($id) . '/cancel';
     return $self->_post($path);
 }
@@ -458,6 +513,7 @@ sub _list_application_fee     { goto &_list }
 sub _refund_application_fee {
     my ( $self, $args ) = @_;
     my ( $base, $id )   = delete @$args{qw(_base id)};
+    _invalid('No id provided.') unless defined $id;
     _clean($args);
     my $path = $base . '/' . uri_escape($id) . '/refund';
     return $self->_post( $path, $args );
@@ -472,6 +528,7 @@ sub account {
     $args->{_base} = 'account';
     return $self->$method($args);
 }
+
 sub _retrieve_account {
     my ( $self, $args ) = @_;
     my $base = $args->{_base};
@@ -486,11 +543,15 @@ sub balance {
     $args->{_base} = 'balance';
     return $self->$method($args);
 }
-sub _retrieve_balance { goto &_retrieve }
+sub _retrieve_balance {
+    my ( $self, $args ) = @_;
+    return $self->_get( $args->{_base} );
+}
 
 sub _transaction_balance {
     my ( $self, $args ) = @_;
     my ( $base, $id )   = @$args{qw(_base id)};
+    _invalid('No id provided.') unless defined $id;
     my $path = $base . '/history/' . uri_escape($id);
     return $self->_get($path);
 }
@@ -561,7 +622,7 @@ sub _encode_params {
                 }
             }
             when ('ARRAY') {
-                for my $sv ( @$value ) {
+                for my $sv (@$value) {
                     next if ref $sv;    # again, I think we can't go deeper
                     push @components, $ek . '[]=' . uri_escape($sv);
                 }
@@ -641,6 +702,15 @@ sub _make_request {
     die _hash_to_error();
 }
 
+# generates validation error when parameters required to construct the URL
+# have not been provided
+sub _invalid {
+    my $message = shift;
+    my %params = ( type => 'Required parameter missing' );
+    $params{message} = $message if defined $message;
+    die _hash_to_error(%params);
+}
+
 
 sub data_object {
     my $ref = shift;
@@ -656,7 +726,7 @@ sub data_object {
 }
 
 sub _hash_to_error {
-    my %args = ( ref $_[0] ? %{ $_[0] } : @_ );
+    my %args  = ( ref $_[0] ? %{ $_[0] } : @_ );
     my $o     = data_object( \%args );
     my $trace = Devel::StackTrace->new( ignore_package => __PACKAGE__ );
     $o->{_trace} = $trace;
@@ -682,7 +752,7 @@ Net::Stripe::Simple - simple, non-Moose interface to the Stripe API
 
 =head1 VERSION
 
-version 0.001
+version 0.002
 
 =head1 SYNOPSIS
 
@@ -711,9 +781,9 @@ error that is thrown is again just Stripe's JSON with a little blessing
 (L<Net::Stripe::Simple::Error>).
 
 This simplicity comes at a cost: L<Net::Stripe::Simple> does not
-validate your parameters (much) before constructing a request and sending it
-off to Stripe. This means that if you've done it wrong it takes a round trip to
-find out.
+validate your parameters aside from those required to construct the URL before
+constructing a request and sending it off to Stripe. This means that if you've
+done it wrong it takes a round trip to find out.
 
 For the full details of stripe's API, see L<https://stripe.com/docs/api>.
 
@@ -793,7 +863,7 @@ required an update to L<Net::Stripe::Simple>.
 
 See L<https://stripe.com/docs/api#charges>.
 
-=head3 Available Actions
+B<Available Actions>
 
 =over 4
 
@@ -840,7 +910,7 @@ Availability may depend on version of API.
 
 See L<https://stripe.com/docs/api#refunds>.
 
-=head3 Available Actions
+B<Available Actions>
 
 =over 4
 
@@ -882,7 +952,7 @@ See L<https://stripe.com/docs/api#refunds>.
 
 See L<https://stripe.com/docs/api#customers>.
 
-=head3 Available Actions
+B<Available Actions>
 
 =over 4
 
@@ -925,7 +995,7 @@ See L<https://stripe.com/docs/api#customers>.
 
 See L<https://stripe.com/docs/api#cards>.
 
-=head3 Available Actions
+B<Available Actions>
 
 =over 4
 
@@ -981,7 +1051,7 @@ See L<https://stripe.com/docs/api#cards>.
 
 See L<https://stripe.com/docs/api#subscriptions>.
 
-=head3 Available Actions
+B<Available Actions>
 
 =over 4
 
@@ -1032,7 +1102,7 @@ See L<https://stripe.com/docs/api#subscriptions>.
 
 See L<https://stripe.com/docs/api#plans>.
 
-=head3 Available Actions
+B<Available Actions>
 
 =over 4
 
@@ -1073,7 +1143,7 @@ See L<https://stripe.com/docs/api#plans>.
 
 =head2 coupons
 
-=head3 Available Actions
+B<Available Actions>
 
 See L<https://stripe.com/docs/api#coupons>.
 
@@ -1106,7 +1176,7 @@ See L<https://stripe.com/docs/api#coupons>.
 
 See L<https://stripe.com/docs/api#discounts>.
 
-=head3 Available Actions
+B<Available Actions>
 
 =over 4
 
@@ -1129,7 +1199,7 @@ See L<https://stripe.com/docs/api#discounts>.
 
 See L<https://stripe.com/docs/api#invoices>.
 
-=head3 Available Actions
+B<Available Actions>
 
 =over 4
 
@@ -1177,7 +1247,7 @@ See L<https://stripe.com/docs/api#invoices>.
 
 See L<https://stripe.com/docs/api#invoiceitems>.
 
-=head3 Available Actions
+B<Available Actions>
 
 =over 4
 
@@ -1219,7 +1289,7 @@ See L<https://stripe.com/docs/api#invoiceitems>.
 
 See L<https://stripe.com/docs/api#disputes>.
 
-=head3 Available Actions
+B<Available Actions>
 
 =over 4
 
@@ -1242,7 +1312,7 @@ See L<https://stripe.com/docs/api#disputes>.
 
 See L<https://stripe.com/docs/api#transfers>.
 
-=head3 Available Actions
+B<Available Actions>
 
 =over 4
 
@@ -1287,7 +1357,7 @@ See L<https://stripe.com/docs/api#transfers>.
 
 See L<https://stripe.com/docs/api#recipients>.
 
-=head3 Available Actions
+B<Available Actions>
 
 =over 4
 
@@ -1327,7 +1397,7 @@ See L<https://stripe.com/docs/api#recipients>.
 
 See L<https://stripe.com/docs/api#application_fees>.
 
-=head3 Available Actions
+B<Available Actions>
 
 =over 4
 
@@ -1349,7 +1419,7 @@ See L<https://stripe.com/docs/api#application_fees>.
 
 See L<https://stripe.com/docs/api#account>.
 
-=head3 Available Actions
+B<Available Actions>
 
 =over 4
 
@@ -1364,7 +1434,7 @@ See L<https://stripe.com/docs/api#account>.
 
 See L<https://stripe.com/docs/api#balance>.
 
-=head3 Available Actions
+B<Available Actions>
 
 =over 4
 
@@ -1386,7 +1456,7 @@ See L<https://stripe.com/docs/api#balance>.
 
 See L<https://stripe.com/docs/api#events>.
 
-=head3 Available Actions
+B<Available Actions>
 
 =over 4
 
@@ -1404,7 +1474,7 @@ See L<https://stripe.com/docs/api#events>.
 
 See L<https://stripe.com/docs/api#tokens>.
 
-=head3 Available Actions
+B<Available Actions>
 
 =over 4
 

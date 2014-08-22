@@ -17,4 +17,5 @@ t/data.t
 t/errors.t
 t/release-pod-coverage.t
 t/release-pod-syntax.t
+t/release-unused-vars.t
 weaver.ini
